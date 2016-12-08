@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * Implements hook_flysystem_plugins().
+ */
+function flysystem_s3_flysystem_plugins() {
+  $plugins = array(
+    's3' => array(
+      'class' => 'Drupal\flysystem_s3\Flysystem\S3',
+    ),
+  );
+
+  return $plugins;
+}

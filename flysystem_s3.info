@@ -1,0 +1,7 @@
+name = Flysystem Amazon S3
+description = Provides an Amazon S3 plugin for Flysystem.
+package = Flysystem
+core = 7.x
+php = 5.4
+
+dependencies[] = flysystem

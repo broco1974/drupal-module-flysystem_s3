@@ -5,26 +5,16 @@ namespace Drupal\flysystem_s3\Flysystem;
 use Aws\AwsClientInterface;
 use Aws\Credentials\Credentials;
 use Aws\S3\S3Client;
-use Drupal\Component\Utility\UrlHelper;
-use Drupal\Core\Logger\RfcLogLevel;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\flysystem\Plugin\FlysystemPluginInterface;
-use Drupal\flysystem\Plugin\FlysystemUrlTrait;
-use Drupal\flysystem\Plugin\ImageStyleGenerationTrait;
+use Drupal\flysystem\Flysystem\Adapter\MissingAdapter;
+use Drupal\flysystem\Plugin\FlysystemPluginBase;
 use Drupal\flysystem_s3\AwsCacheAdapter;
 use Drupal\flysystem_s3\Flysystem\Adapter\S3Adapter;
 use League\Flysystem\Config;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Drupal plugin for the "S3" Flysystem adapter.
- *
- * @Adapter(id = "s3")
  */
-class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
-
-  use ImageStyleGenerationTrait;
-  use FlysystemUrlTrait { getExternalUrl as getDownloadlUrl; }
+class S3 extends FlysystemPluginBase {
 
   /**
    * The S3 bucket.
@@ -81,9 +71,9 @@ class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    $configuration = static::mergeConfiguration($container, $configuration);
-    $client_config = static::mergeClientConfiguration($container, $configuration);
+  public static function create(array $configuration) {
+    $configuration = static::mergeConfiguration($configuration);
+    $client_config = static::mergeClientConfiguration($configuration);
 
     $client = S3Client::factory($client_config);
 
@@ -95,15 +85,13 @@ class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
   /**
    * Returns an S3 client configuration based on a Flysystem configuration.
    *
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   The container to pull out services used in the plugin.
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
    *
    * @return array
    *   The client configuration.
    */
-  public static function mergeClientConfiguration(ContainerInterface $container, array $configuration) {
+  public static function mergeClientConfiguration(array $configuration) {
     $client_config = [
       'version' => 'latest',
       'region' => $configuration['region'],
@@ -118,7 +106,7 @@ class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
     }
 
     $client_config['credentials.cache'] = new AwsCacheAdapter(
-      $container->get('cache.default'),
+      // $container->get('cache.default'),
       'flysystem_s3:'
     );
 
@@ -128,18 +116,17 @@ class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
   /**
    * Merges default Flysystem configuration.
    *
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *   The container to pull out services used in the plugin.
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
    *
    * @return array
    *   The Flysystem configuration.
    */
-  public static function mergeConfiguration(ContainerInterface $container, array $configuration) {
-    $protocol = $container->get('request_stack')
-      ->getCurrentRequest()
-      ->getScheme();
+  public static function mergeConfiguration(array $configuration) {
+    // $protocol = $container->get('request_stack')
+    //   ->getCurrentRequest()
+    //   ->getScheme();
+    $protocol = 'https';
 
     return $configuration += [
       'protocol' => $protocol,
@@ -175,7 +162,7 @@ class S3 implements FlysystemPluginInterface, ContainerFactoryPluginInterface {
     // @TODO: If the bucket exists, can we write to it? Find a way to test that.
     if (!$this->client->doesBucketExist($this->bucket)) {
       return [[
-        'severity' => RfcLogLevel::ERROR,
+        'severity' => WATCHDOG_ERROR,
         'message' => 'Bucket %bucket does not exist.',
         'context' => [
           '%bucket' => $this->bucket,

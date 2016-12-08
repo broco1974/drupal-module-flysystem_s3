@@ -152,7 +152,7 @@ class S3 extends FlysystemPluginBase {
       $this->generateImageStyle($target);
     }
 
-    return $this->urlPrefix . '/' . UrlHelper::encodePath($target);
+    return $this->urlPrefix . '/' . drupal_encode_path($target);
   }
 
   /**
@@ -188,14 +188,14 @@ class S3 extends FlysystemPluginBase {
     $cname = (string) $config->get('cname');
 
     $prefix = (string) $config->get('prefix', '');
-    $prefix = $prefix === '' ? '' : '/' . UrlHelper::encodePath($prefix);
+    $prefix = $prefix === '' ? '' : '/' . drupal_encode_path($prefix);
 
     if ($cname !== '' && $config->get('cname_is_bucket', TRUE)) {
        return $protocol . '://' . $cname . $prefix;
      }
 
     $bucket = (string) $config->get('bucket', '');
-    $bucket = $bucket === '' ? '' : '/' . UrlHelper::encodePath($bucket);
+    $bucket = $bucket === '' ? '' : '/' . drupal_encode_path($bucket);
 
     // No custom CNAME was provided. Generate the default S3 one.
     if ($cname === '') {
